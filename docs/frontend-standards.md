@@ -9,7 +9,7 @@ Conventions for the React frontend under `frontend/`. Companion to the root `CLA
 - **Create React App 5** (`react-scripts`) — build tooling and dev server. Not Vite/Next.
 - **React Router DOM v6** — routing (`<Routes>/<Route element>`, `useNavigate`, `useParams`).
 - **React Bootstrap 5** + `react-bootstrap-icons` — UI. No styled-components/MUI.
-- **@dnd-kit/core** — drag & drop (accessible, React 18 compatible). Chosen over the deprecated `react-beautiful-dnd`. Use `collisionDetection={pointerWithin}` for board-style drops (resolves the droppable by pointer location, not by the dragged element's rect — more predictable for columns), and key droppable columns by a stable domain id.
+- **@dnd-kit/core** — drag & drop (accessible, React 18 compatible). Chosen over the deprecated `react-beautiful-dnd`. Key droppable columns by a stable domain id. For collision detection, compose `pointerWithin` with a `rectIntersection` fallback: `pointerWithin` gives predictable board-style drops for mouse/touch, but returns nothing for `KeyboardSensor` (no pointer coordinates), so falling back to `rectIntersection` keeps keyboard drags working.
 - **fetch** — HTTP client. Note: `axios` is imported by `services/candidateService.js` but is NOT installed; prefer `fetch` for new code.
 
 ## Codebase traps (read before editing)

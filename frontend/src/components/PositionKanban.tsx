@@ -1,13 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Spinner, Alert, Button } from 'react-bootstrap';
 import { ArrowLeft } from 'react-bootstrap-icons';
 import {
+  CollisionDetection,
   DndContext,
   DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -24,6 +26,14 @@ import './PositionKanban.css';
 
 const UNKNOWN_COLUMN_ID = 'unknown';
 
+// Pointer-based detection for mouse/touch, falling back to rectangle
+// intersection so KeyboardSensor drags (which provide no pointer coordinates)
+// can still resolve a drop target.
+const collisionDetectionStrategy: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  return pointerCollisions.length > 0 ? pointerCollisions : rectIntersection(args);
+};
+
 /** Position detail view: a kanban board of a position's candidates by interview phase. */
 const PositionKanban: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +45,11 @@ const PositionKanban: React.FC = () => {
   const [steps, setSteps] = useState<InterviewStep[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [moveError, setMoveError] = useState<string | null>(null);
+
+  // Latest intended destination phase per candidate, so a failed move that has
+  // already been superseded by a newer move of the same candidate does not
+  // revert the newer (still-applied) state.
+  const pendingMoveRef = useRef(new Map<number, string>());
 
   useEffect(() => {
     let cancelled = false;
@@ -110,6 +125,7 @@ const PositionKanban: React.FC = () => {
       // update) so a concurrent in-flight move of another candidate is not
       // clobbered by a stale whole-list snapshot.
       const previousStepName = candidate.currentInterviewStep;
+      pendingMoveRef.current.set(candidateId, destStep.name);
       setCandidates((prev) =>
         prev.map((c) =>
           c.id === candidateId ? { ...c, currentInterviewStep: destStep.name } : c,
@@ -117,6 +133,9 @@ const PositionKanban: React.FC = () => {
       );
 
       updateCandidateStage(candidateId, candidate.applicationId, destStepId).catch(() => {
+        // Skip the revert if a newer move of the same candidate has superseded
+        // this one, to avoid clobbering the newer (still-applied) state.
+        if (pendingMoveRef.current.get(candidateId) !== destStep.name) return;
         setCandidates((prev) =>
           prev.map((c) =>
             c.id === candidateId ? { ...c, currentInterviewStep: previousStepName } : c,
@@ -183,7 +202,7 @@ const PositionKanban: React.FC = () => {
           ) : (
             <DndContext
               sensors={sensors}
-              collisionDetection={pointerWithin}
+              collisionDetection={collisionDetectionStrategy}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
