@@ -1,0 +1,55 @@
+schema: spec-driven
+
+# Project context shown to the AI when creating OpenSpec artifacts.
+context: |
+  Project: LTI ATS frontend exercise — a React app to manage the candidates of a job
+  position as a kanban board (columns = interview phases; drag a card to change phase).
+  This is a FRONTEND-ONLY exercise. Do NOT modify the backend.
+
+  Tech stack (verified from the codebase):
+  - Create React App (react-scripts 5), React 18.3, TypeScript 4.9
+  - React Router v6, React Bootstrap 5 + react-bootstrap-icons
+  - Drag & drop: @dnd-kit/core (NOT react-beautiful-dnd)
+  - HTTP via native fetch (axios is imported by legacy code but NOT installed)
+  - Backend (do not touch): Express + Prisma + Postgres, port 3010
+
+  Codebase traps:
+  - Edit App.js (the real router); App.tsx is dead CRA boilerplate.
+  - Positions.tsx uses mock data and its "Ver proceso" button has no action — that is the
+    navigation hook point to the new position detail route (/positions/:id).
+
+  Real backend API contract (verified live with curl — the exercise brief documents a
+  DIFFERENT, incorrect contract; trust this one). Base URL http://localhost:3010:
+  - GET /position/:id/interviewflow (singular, lowercase) → double-nested:
+    resp.interviewFlow.positionName and resp.interviewFlow.interviewFlow.interviewSteps[]
+    ({id, name, orderIndex}); sort columns by orderIndex then id (seed has ties).
+  - GET /position/:id/candidates (singular) → [{fullName, currentInterviewStep (step NAME),
+    averageScore, id (candidateId), applicationId}].
+  - PUT /candidates/:candidateId (no /stage) → body {applicationId, currentInterviewStep:
+    <destination step id, numeric>}. Cards carry the phase NAME; the PUT needs the numeric
+    step id → build a name→id map from the interview flow.
+
+  Language policy:
+  - English for all code, comments, UI/error strings, commit messages, and OpenSpec
+    artifacts (specs, tasks, design).
+  - Spanish only for user stories in user-stories/ and the deliverable prompts/prompts-AJM.md.
+
+  Sources of truth (read and apply when creating or implementing artifacts):
+  - CLAUDE.md — core principles, language policy, workflow
+  - docs/frontend-standards.md — React/UI conventions and the verified API contract
+  - user-stories/US-01-kanban-candidatos-posicion.md — the driving user story
+  For frontend implementation and review, adopt ai-specs/agents/frontend-developer.md.
+  Before archiving a change, run the adversarial-review skill.
+
+# Per-artifact rules.
+rules:
+  _global:
+    - Before creating any artifact, read and apply CLAUDE.md and docs/frontend-standards.md.
+    - Use the verified backend API contract, never the (incorrect) exercise brief endpoints.
+    - This is frontend-only; never propose backend changes.
+  proposal:
+    - Keep it focused on the kanban feature scope; include a "Non-goals" section.
+  tasks:
+    - 'Step 0 MUST be "work on the existing feature branch" (never commit to main).'
+    - 'The AGENT must verify behavior itself, never delegate testing to the user. Run manual API checks with curl, and end-to-end UI checks with Playwright MCP for user-facing flows. Restore database state after any data-mutating check.'
+    - 'Keep tasks small and incremental. No mandatory DB-state reports or coverage gates for this exercise (lightweight flow).'
