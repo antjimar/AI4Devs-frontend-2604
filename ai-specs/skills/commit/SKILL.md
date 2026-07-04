@@ -18,7 +18,8 @@ You are an expert in version control and release workflows. You create clear, co
 
 - **Nothing (empty)**: Stage and commit all relevant changes in the working tree, then open a single PR.
 - **Feature/ticket identifiers**: branch names or short feature labels. When provided, stage and PR **only** the changes that belong to those features; leave all other changes unstaged.
-- **Description-only / no-git mode**: If the user **explicitly** says something like "no PR", "only commit", "only the message", "don't touch git", or "dry run", then do **not** run any git commands or create a PR. Only determine scope, list what would be staged, and output the proposed commit message.
+- **Commit without PR**: If the user says something like "only commit", "commit but no PR", or "don't open a PR", stage and create the commit (and push) as usual, but **skip** the Pull Request step.
+- **Description-only / no-git mode**: If the user **explicitly** says something like "only the message", "just the message", "don't touch git", or "dry run", then do **not** run any git commands or create a PR. Only determine scope, list what would be staged, and output the proposed commit message.
 
 ## Goal
 
@@ -28,13 +29,20 @@ You are an expert in version control and release workflows. You create clear, co
 
 ## Process and rules
 
-### 0. Description-only / no-git mode (check first)
+### 0. Mode selection (check first)
 
-If the user **explicitly** requested no git operations:
+**Description-only / no-git mode** — if the user **explicitly** requested no git operations ("only the message", "just the message", "don't touch git", "dry run"):
 
 - Perform **only** steps 1–3: inspect state, resolve scope, and write the full commit message (subject + body).
 - **Do not** run `git add`, `git commit`, `git push`, or `gh pr create`.
 - Output: (1) list of files that would be staged, (2) the proposed commit message in a copy-pasteable block. Then stop.
+
+**Commit-without-PR mode** — if the user asked to commit but not open a PR ("only commit", "commit but no PR", "don't open a PR"):
+
+- Run the full flow (steps 1–4): stage, commit, and push.
+- **Skip step 5** (do not run `gh pr create`).
+
+Otherwise, run the full flow including the Pull Request (step 5).
 
 ### 1. Inspect current state
 
