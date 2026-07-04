@@ -9,7 +9,7 @@ Conventions for the React frontend under `frontend/`. Companion to the root `CLA
 - **Create React App 5** (`react-scripts`) — build tooling and dev server. Not Vite/Next.
 - **React Router DOM v6** — routing (`<Routes>/<Route element>`, `useNavigate`, `useParams`).
 - **React Bootstrap 5** + `react-bootstrap-icons` — UI. No styled-components/MUI.
-- **@dnd-kit/core** — drag & drop (accessible, React 18 compatible). Chosen over the deprecated `react-beautiful-dnd`.
+- **@dnd-kit/core** — drag & drop (accessible, React 18 compatible). Chosen over the deprecated `react-beautiful-dnd`. Use `collisionDetection={pointerWithin}` for board-style drops (resolves the droppable by pointer location, not by the dragged element's rect — more predictable for columns), and key droppable columns by a stable domain id.
 - **fetch** — HTTP client. Note: `axios` is imported by `services/candidateService.js` but is NOT installed; prefer `fetch` for new code.
 
 ## Codebase traps (read before editing)
@@ -58,5 +58,7 @@ Base URL: `http://localhost:3010`
 ## Testing
 
 - **E2E with Playwright MCP** for user-facing workflows: the agent drives the browser itself (navigate, click, drag, snapshot) and verifies outcomes; restore data state after mutating checks.
+  - **Testing @dnd-kit drags**: Playwright's `dragTo` (single mouse jump) does not reliably trigger dnd-kit's PointerSensor. Use stepped mouse moves instead: `mouse.move(start)` → `mouse.down()` → a small move to pass the activation constraint → `mouse.move(end, { steps: N })` → `mouse.up()`.
+  - **Forcing failure paths**: to test revert-on-error without touching the backend, intercept the request with `page.route(...)` and `route.abort()`.
 - **Manual API checks with `curl`** against the running backend to confirm integration.
 - Component unit tests are optional for this exercise; if added, use React Testing Library (CRA's `react-scripts test`; note the current `npm test` script is misconfigured and points to a non-existent `jest.config.js`).

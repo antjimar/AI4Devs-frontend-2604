@@ -42,14 +42,18 @@ context: |
   Before archiving a change, run the adversarial-review skill.
 
 # Per-artifact rules.
+# Note: OpenSpec only accepts the artifact ids (proposal/specs/design/tasks) as rule keys;
+# there is no "_global". The shared constraints below are also stated in the context block.
 rules:
-  _global:
-    - Before creating any artifact, read and apply CLAUDE.md and docs/frontend-standards.md.
-    - Use the verified backend API contract, never the (incorrect) exercise brief endpoints.
-    - This is frontend-only; never propose backend changes.
   proposal:
+    - Read and apply CLAUDE.md and docs/frontend-standards.md; use the verified backend API contract, never the exercise brief endpoints; this is frontend-only, never propose backend changes.
     - Keep it focused on the kanban feature scope; include a "Non-goals" section.
+  specs:
+    - Read and apply CLAUDE.md and docs/frontend-standards.md; describe observable behavior against the verified backend API contract, never the exercise brief endpoints; frontend-only.
+  design:
+    - Read and apply CLAUDE.md and docs/frontend-standards.md; base decisions on the verified backend API contract; frontend-only, never propose backend changes.
   tasks:
+    - Read and apply CLAUDE.md and docs/frontend-standards.md; use the verified backend API contract; frontend-only.
     - 'Step 0 MUST be "work on the existing feature branch" (never commit to main).'
     - 'The AGENT must verify behavior itself, never delegate testing to the user. Run manual API checks with curl, and end-to-end UI checks with Playwright MCP for user-facing flows. Restore database state after any data-mutating check.'
     - 'Keep tasks small and incremental. No mandatory DB-state reports or coverage gates for this exercise (lightweight flow).'
